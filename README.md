@@ -1,6 +1,6 @@
 # What?
 This is console utility for automatical tracking work time from you Bitrix24 calendar to Jira issue.
-<br>User confedential data is stored in file `userData.json`, the one provided is just a sample.
+<br>User confidential data is stored in file `userData.json`, the one provided is just a sample.
 
 # Prerequisites
 0. Install groovy

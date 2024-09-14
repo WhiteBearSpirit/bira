@@ -32,10 +32,10 @@ This is console utility for automatical tracking work time from you Bitrix24 cal
 
 To sync your day from bitrix to jira use:
 ```
-groovy sync.groovy 2023-09-09
+groovy sync.groovy 2024-09-09
 ```
 
 To fill your day work time to max (8 hours) with communication use:
 ```
-groovy fill_communication.groovy 2023-09-09
+groovy fill_communication.groovy 2024-09-09
 ```

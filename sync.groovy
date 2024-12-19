@@ -4,21 +4,26 @@ import groovy.transform.EqualsAndHashCode
 
 class Bira {
 
+    final static String COMMUNICATION_TASK_CODE = "HRL-4244";
+    final static String RECURRENT_TASK_CODE = "HRL-4245";
+
     @EqualsAndHashCode
     static class BitrixEvent {
 
         String id;
         String name;
         int dt_in_seconds;
+        boolean recurrent;
 
-        BitrixEvent(String id, String name, int dt_in_seconds) {
+        BitrixEvent(String id, String name, int dt_in_seconds, boolean recurrent) {
             this.id = id;
             this.name = name;
             this.dt_in_seconds = dt_in_seconds;
+            this.recurrent = recurrent;
         }
 
         String toString() {
-            return String.format("[id=%s, name=%s, dur=%s]", this.id, this.name, this.dt_in_seconds)
+            return String.format("[id=%s, name=%s, dur=%s, recur=%s]", this.id, this.name, this.dt_in_seconds, this.recurrent)
         }
     }
 
@@ -49,18 +54,21 @@ class Bira {
 
         Date eventDate = Date.parse( 'dd.MM.yyyy', o.DATE_FROM);
         if (!targetDate.equals(eventDate)) { return null; }
-        return new BitrixEvent(o.ID, o.NAME, (int) o.DT_LENGTH);
+        return new BitrixEvent(o.ID, o.NAME, (int) o.DT_LENGTH, (o.RRULE != "" || o.RECURRENCE_ID != null));
     }
 
-    static void sendToPira(String dateString, int duration, String worker, String comment, String piraToken) {
+    static void sendToPira(String dateString, String worker, String piraToken, BitrixEvent event) {
+        
+        int duration = event.dt_in_seconds;
+        String comment = event.name;
+        String taskId = event.recurrent ? RECURRENT_TASK_CODE : COMMUNICATION_TASK_CODE;
 
-        print("Sending event ${comment} with duration ${duration} to pira... ");
+        print("Sending ${event.recurrent?"":"non-"}recurrent event ${comment} with duration ${duration} to pira... ");
         String urlString = "https://<your_jira_host>/rest/tempo-timesheets/4/worklogs/"
         String bodyString = String.format(
-            '{"started":"%s","timeSpentSeconds":%s,"originTaskId":"HRL-4245","worker":"%s","comment":"%s","attributes":{"_Статья_":{"name":"Статья","workAttributeId":8,"value":"WORK"}}}',
-            dateString, duration, worker, comment
+            '{"started":"%s","timeSpentSeconds":%s,"originTaskId":"%s","worker":"%s","comment":"%s","attributes":{"_Статья_":{"name":"Статья","workAttributeId":8,"value":"WORK"}}}',
+            dateString, duration, taskId, worker, comment
         )
-        //println(bodyString);
         HttpURLConnection post = new URL(urlString).openConnection();
         post.setRequestMethod("POST");
         post.setRequestProperty ("Authorization", "Bearer " + piraToken);
@@ -75,14 +83,18 @@ class Bira {
 
     static void main(String[] args) {
 
-        String dateString = args[0];
-        Date.parse('yyyy-MM-dd', dateString) // validation
+        String dateFromString = args[0];
+        String dateToString = args.length > 1 ? args[1] : null;
+        Date dateFrom = Date.parse('yyyy-MM-dd', dateFromString);
+        Date dateTo = (dateToString != null) ? Date.parse('yyyy-MM-dd', dateToString) : dateFrom;
         File userDataFile = new File("userData.json");
+        (dateFrom..dateTo).step(1) {
+            String dateString = it.format('yyyy-MM-dd');
         Object userData = new groovy.json.JsonSlurper().parseText(userDataFile.getText());
         BitrixEvent[] data = fetchEvents(userData.bitrixUserId, userData.bitrixApiSecret, dateString);
-        //println(data)
-        for (rec in data) {
-            sendToPira(dateString, rec.dt_in_seconds, userData.piraUserId, rec.name, userData.piraToken);
+            for (event in data) {
+                sendToPira(dateString, userData.piraUserId, userData.piraToken, event);
+            }
         }
     }   
 }

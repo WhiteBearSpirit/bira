@@ -35,7 +35,7 @@ To sync your day from bitrix to jira use:
 groovy sync.groovy 2024-09-09
 ```
 
-To fill your day work time to max (8 hours) with communication use:
+To sync range of your days specify 2 dates:
 ```
-groovy fill_communication.groovy 2024-09-09
+groovy sync.groovy 2024-09-09 2024-09-14
 ```

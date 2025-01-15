@@ -67,7 +67,7 @@ class Bira {
         String urlString = "https://<your_jira_host>/rest/tempo-timesheets/4/worklogs/"
         String bodyString = String.format(
             '{"started":"%s","timeSpentSeconds":%s,"originTaskId":"%s","worker":"%s","comment":"%s","attributes":{"_Статья_":{"name":"Статья","workAttributeId":8,"value":"WORK"}}}',
-            dateString, duration, taskId, worker, comment
+            dateString, duration, taskId, worker, comment.replaceAll(/(!|"|@|#|\$|%|&|\\/|\(|\)|=|\?)/, /\\$0/)
         )
         HttpURLConnection post = new URL(urlString).openConnection();
         post.setRequestMethod("POST");
